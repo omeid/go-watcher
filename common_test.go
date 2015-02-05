@@ -37,7 +37,11 @@ func TestParamsClone(t *testing.T) {
 func TestPrepareArgs(t *testing.T) {
 	args := []string{"watcher", "-run", "balcony", "-p", "11880", "--watch", "show", "--host", "localhost"}
 
-	params := PrepareArgs(args)
+	params, err := PrepareArgs(args)
+	if err != nil {
+		t.Fatal("Failed to parse args: %v", err)
+	}
+
 	if len(params.Package) != 4 {
 		t.Fatalf("Expected 2 parameters with their values in Package parameters but got %d", len(params.Package))
 	}

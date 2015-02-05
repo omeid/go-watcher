@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -20,7 +21,7 @@ func NewBuilder(w *Watcher, r *Runner) *Builder {
 
 // Build listens watch events from Watcher and sends messages to Runner
 // when new changes are built.
-func (b *Builder) Build(p *Params) {
+func (b *Builder) Build(p *Params) error {
 	go b.registerSignalHandler()
 	go func() {
 		b.watcher.update <- true
@@ -31,20 +32,19 @@ func (b *Builder) Build(p *Params) {
 
 		pkg := p.GetPackage()
 
-		color.Cyan("Building %s...\n", pkg)
+		log.Printf(color.CyanString("Building %s...\n", pkg))
 
 		// build package
 		cmd, err := runCommand("go", "build", "-o", fileName, pkg)
 		if err != nil {
-			log.Fatalf("Could not run 'go build' command: %s", err)
-			continue
+			return fmt.Errorf("Could not run 'go build' command: %s", err)
 		}
 
 		if err := cmd.Wait(); err != nil {
 			if err := interpretError(err); err != nil {
-				color.Red("An error occurred while building: %s", err)
+				log.Printf(color.RedString("An error occurred while building: %s", err))
 			} else {
-				color.Red("A build error occurred. Please update your code...")
+				log.Printf(color.RedString("A build error occurred. Please update your code..."))
 			}
 
 			continue
@@ -53,6 +53,8 @@ func (b *Builder) Build(p *Params) {
 		// and start the new process
 		b.runner.restart(fileName)
 	}
+
+	return nil
 }
 
 func (b *Builder) registerSignalHandler() {

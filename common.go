@@ -94,12 +94,9 @@ func runCommand(name string, args ...string) (*exec.Cmd, error) {
 
 // PrepareArgs filters the system parameters from package parameters
 // and returns Params instance
-func PrepareArgs(args []string) *Params {
+func PrepareArgs(args []string) (*Params, error) {
 
 	params := NewParams()
-
-	// remove command
-	args = args[1:len(args)]
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -107,7 +104,7 @@ func PrepareArgs(args []string) *Params {
 
 		if arg == "run" || arg == "watch" {
 			if len(args) <= i+1 {
-				log.Fatalf("missing parameter value: %s", arg)
+				return nil, fmt.Errorf("missing parameter value: %s", arg)
 			}
 
 			params.System[arg] = args[i+1]
@@ -120,7 +117,7 @@ func PrepareArgs(args []string) *Params {
 
 	params.CloneRun()
 
-	return params
+	return params, nil
 }
 
 // stripDash removes the dash chars and returns parameter name

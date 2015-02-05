@@ -37,7 +37,7 @@ func NewRunner() *Runner {
 func (r *Runner) Run(p *Params) {
 	for fileName := range r.start {
 
-		color.Green("Running %s...\n", p.Get("run"))
+		log.Printf(color.GreenString("Running %s...\n", p.Get("run")))
 
 		cmd, err := runCommand(fileName, p.Package...)
 		if err != nil {

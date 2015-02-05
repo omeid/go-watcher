@@ -1,15 +1,24 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	watcher "github.com/canthefason/go-watcher"
 )
 
 func main() {
-	params := watcher.PrepareArgs(os.Args)
+	params, err := watcher.PrepareArgs(os.Args[1:])
 
-	w := watcher.MustRegisterWatcher(params)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w, err := watcher.MustRegisterWatcher(params)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer w.Close()
 
 	r := watcher.NewRunner()
@@ -19,10 +28,20 @@ func main() {
 	b := watcher.NewBuilder(w, r)
 
 	// build given package
-	go b.Build(params)
+	go func() {
+		err := b.Build(params)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	// listen for further changes
-	go w.Watch()
+	go func() {
+		err := w.Watch()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	r.Wait()
 }

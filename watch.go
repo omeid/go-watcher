@@ -27,7 +27,7 @@ var ErrPathNotSet = errors.New("gopath not set")
 
 // MustRegisterWatcher creates a new Watcher and starts listening
 // given folders
-func MustRegisterWatcher(params *Params) *Watcher {
+func MustRegisterWatcher(params *Params) (*Watcher, error) {
 
 	w := &Watcher{
 		update:  make(chan bool),
@@ -37,18 +37,18 @@ func MustRegisterWatcher(params *Params) *Watcher {
 	var err error
 	w.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatalf("Could not register watcher: %s", err)
+		return nil, fmt.Errorf("Could not register watcher: %s", err)
 	}
 
 	// add watched paths
-	w.watchFolders()
+	err = w.watchFolders()
 
-	return w
+	return w, err
 }
 
 // Watch listens file updates, and sends signal to
 // update channel when go files are updated
-func (w *Watcher) Watch() {
+func (w *Watcher) Watch() error {
 	eventSent := false
 
 	for {
@@ -73,11 +73,13 @@ func (w *Watcher) Watch() {
 			}
 		case err := <-w.watcher.Errors:
 			if err != nil {
-				log.Fatalf("Watcher error: %s", err)
+				return fmt.Errorf("Watcher error: %s", err)
 			}
-			return
+			return nil
 		}
 	}
+
+	return nil
 }
 
 func (w *Watcher) Wait() <-chan bool {
@@ -92,17 +94,17 @@ func (w *Watcher) Close() {
 
 // watchFolders recursively adds folders that will be watched for changes,
 // starting from the working directory
-func (w *Watcher) watchFolders() {
+func (w *Watcher) watchFolders() error {
 	wd, err := w.prepareRootDir()
 
 	if err != nil {
-		log.Fatalf("Could not get root working directory: %s", err)
+		return fmt.Errorf("Could not get root working directory: %s", err)
 	}
 
 	filepath.Walk(wd, func(path string, info os.FileInfo, err error) error {
 		// skip files
 		if info == nil {
-			log.Fatalf("wrong watcher package: %s", path)
+			return fmt.Errorf("wrong watcher package: %s", path)
 		}
 
 		if !info.IsDir() {
@@ -114,18 +116,21 @@ func (w *Watcher) watchFolders() {
 			return filepath.SkipDir
 		}
 
-		w.addFolder(path)
+		return w.addFolder(path)
 
-		return err
 	})
+
+	return nil
 }
 
 // addFolder adds given folder name to the watched folders, and starts
 // watching it for further changes
-func (w *Watcher) addFolder(name string) {
+func (w *Watcher) addFolder(name string) error {
 	if err := w.watcher.Add(name); err != nil {
-		log.Fatalf("Could not watch folder: %s", err)
+		return fmt.Errorf("Could not watch folder: %s", err)
 	}
+
+	return nil
 }
 
 // prepareRootDir prepares working directory depending on root directory
