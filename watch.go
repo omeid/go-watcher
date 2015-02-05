@@ -5,7 +5,6 @@ package watcher
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"

@@ -3,7 +3,6 @@ package watcher
 import (
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"

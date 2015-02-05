@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"

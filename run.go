@@ -5,7 +5,6 @@
 package watcher
 
 import (
-	"log"
 	"os/exec"
 	"sync"
 
